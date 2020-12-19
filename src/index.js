@@ -139,6 +139,7 @@ export default class RelationChart {
       .on('click', () => {
         console.log('画布 click');
         if (that.config.isHighLight) {
+          that.clickedObjIndex = null;
           that.cancelHighlightObject();
         }
        })
@@ -390,6 +391,7 @@ export default class RelationChart {
         // ########################
         // $(this).prev('rect').attr('width', width + 10);
         // d3.select(this).prev('rect').attr('width', width + 10);
+        d3.select(this.previousSibling).attr('width', width + 10);
         // 7.3.2 更新 text 的位置
         return getDis(d.source, d.target) / 2
       })
@@ -430,8 +432,8 @@ export default class RelationChart {
     }).transition().style('opacity', 1);
     // 恢复隐藏的线
     this.SVG.selectAll('.edge').filter((d) => {
-      // return true;
-      return ((this.dependsLinkAndText.indexOf(d.source.index) == -1) && (this.dependsLinkAndText.indexOf(d.target.index) == -1))
+      return true;
+      // return ((this.dependsLinkAndText.indexOf(d.source.index) == -1) && (this.dependsLinkAndText.indexOf(d.target.index) == -1))
     }).transition().style('opacity', 1);
     this.dependsNode = [];
     this.dependsLinkAndText = [];
@@ -457,7 +459,8 @@ export default class RelationChart {
     // 隐藏线
     this.SVG.selectAll('.edge').filter((d) => {
       // return true;
-      return ((this.dependsLinkAndText.indexOf(d.source.index) == -1) && (this.dependsLinkAndText.indexOf(d.target.index) == -1))
+      // return ((this.dependsLinkAndText.indexOf(d.source.index) == -1) && (this.dependsLinkAndText.indexOf(d.target.index) == -1))
+      return (this.dependsLinkAndText.indexOf(d.source.index) == -1)
     }).transition().style('opacity', 0.1);
 
   }
