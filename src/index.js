@@ -18,6 +18,10 @@ function extend(target) {
   return target;
 };
 
+function byteSize(str) {
+  return new Blob([str]).size;
+}
+
 // 求两点间的距离
 function getDis(s, t) {
   return Math.sqrt((s.x - t.x) * (s.x - t.x) + (s.y - t.y) * (s.y - t.y));
@@ -253,7 +257,9 @@ export default class RelationChart {
     this.rects = this.rect_g.append("rect")
       .attr("x", 40)
       .attr("y", -10)
-      .attr("width", 40)
+      .attr("width", (d)=>{
+        return byteSize(d.relation) * 5 + 10;
+      })
       .attr("height", 20)
       .attr("fill", "white")
       .attr('stroke', (d) => {
@@ -362,8 +368,12 @@ export default class RelationChart {
 
           // 让alpha目标值值恢复为默认值0,停止力模型
           if (!event.active) this.simulation.alphaTarget(0);
-          d.fx = null;
-          d.fy = null;
+          d.x = d.fx;
+          d.y = d.fy;
+
+          //此处将fx和fy设为null可使力模型继续运动，但是会导致箭头缩短。
+          // d.fx = null;
+          // d.fy = null;
         }));
   }
 
