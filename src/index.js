@@ -129,7 +129,6 @@ export default class RelationChart {
       .attr("width", this.config.width)
       .attr("height", this.config.height)
     // .transition().duration(750).call(d3.zoom().transform, d3.zoomIdentity);
-    
       .call(d3.zoom().scaleExtent(this.config.scaleExtent).on("zoom", ({transform}) => {
         if (this.config.isScale) {
           this.relMap_g.attr("transform", transform);
@@ -137,13 +136,7 @@ export default class RelationChart {
       }))
       .on('click', () => console.log('画布 click'))
       .on("dblclick.zoom", null);
-    
-    /*
-    .call(d3.zoom()
-      .extent([[0, 0], [width, height]])
-      .scaleExtent([1, 8])
-      .on("zoom", zoomed));
-   */
+   
     // 3.defs  <defs>标签的内容不会显示，只有调用的时候才显示
     this.defs = this.SVG.append('defs');
     // 3.1 添加箭头
