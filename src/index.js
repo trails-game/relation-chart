@@ -101,6 +101,8 @@ export default class RelationChart {
 
     // 创建力学模拟器
     this.initSimulation()
+    
+    this.clickedObjIndex = null;
   }
 
   // 创建力学模拟器
@@ -134,7 +136,12 @@ export default class RelationChart {
           this.relMap_g.attr("transform", transform);
         }
       }))
-      .on('click', () => console.log('画布 click'))
+      .on('click', () => {
+        console.log('画布 click');
+        if (that.config.isHighLight) {
+          that.cancelHighlightObject();
+        }
+       })
       .on("dblclick.zoom", null);
    
     // 3.defs  <defs>标签的内容不会显示，只有调用的时候才显示
@@ -286,16 +293,24 @@ export default class RelationChart {
       .on('mouseover', function (event, d) {
         d3.select(this).attr('stroke-width', '8');
         d3.select(this).attr('stroke', '#a3e5f9');
+        
         if (that.config.isHighLight) {
-          that.highlightObject(d);
+          if (that.clickedObjIndex === null) {
+            that.highlightObject(d);
+          }
         }
+        
       })
       .on('mouseout', function (event, d) {
         d3.select(this).attr('stroke-width', that.config.strokeWidth);
         d3.select(this).attr('stroke', '#c5dbf0');
+        
         if (that.config.isHighLight) {
-          that.highlightObject(null);
+          if (that.clickedObjIndex === null) {
+            that.cancelHighlightObject();
+          }
         }
+        
       })
       .on('click', function (event, d) {
         console.log('头像节点click')
@@ -308,8 +323,16 @@ export default class RelationChart {
         //阻止事件冒泡  阻止事件默认行为
         event.stopPropagation ? (event.stopPropagation()) : (event.cancelBubble = true);
         event.preventDefault ? (event.preventDefault()) : (event.returnValue = false);
-
-
+        if (that.config.isHighLight) {
+          if (that.clickedObjIndex === d.index) {
+            that.clickedObjIndex = null;
+            that.cancelHighlightObject(d);
+          } else {
+            that.cancelHighlightObject();
+            that.clickedObjIndex = d.index;
+            that.highlightObject(d);
+          }
+        }
       })
       .on('contextmenu', function () {    //鼠标右键菜单
         event = event || window.event;
@@ -398,45 +421,45 @@ export default class RelationChart {
       })
 
   }
+  
+  cancelHighlightObject() {
+    // 取消高亮
+    // 恢复隐藏的线
+    this.SVG.selectAll('circle').filter(() => {
+      return true;
+    }).transition().style('opacity', 1);
+    // 恢复隐藏的线
+    this.SVG.selectAll('.edge').filter((d) => {
+      // return true;
+      return ((this.dependsLinkAndText.indexOf(d.source.index) == -1) && (this.dependsLinkAndText.indexOf(d.target.index) == -1))
+    }).transition().style('opacity', 1);
+    this.dependsNode = [];
+    this.dependsLinkAndText = [];
+  }
 
   // 高亮元素及其相关的元素
   highlightObject(obj) {
-    if (obj) {
-      var objIndex = obj.index;
-      this.dependsNode = this.dependsNode.concat([objIndex]);
-      this.dependsLinkAndText = this.dependsLinkAndText.concat([objIndex]);
-      this.config.links.forEach((lkItem) => {
-        if (objIndex == lkItem['source']['index']) {
-          this.dependsNode = this.dependsNode.concat([lkItem.target.index]);
-        } else if (objIndex == lkItem['target']['index']) {
-          this.dependsNode = this.dependsNode.concat([lkItem.source.index]);
-        }
-      });
+    var objIndex = obj.index;
+    this.dependsNode = this.dependsNode.concat([objIndex]);
+    this.dependsLinkAndText = this.dependsLinkAndText.concat([objIndex]);
+    this.config.links.forEach((lkItem) => {
+      if (objIndex == lkItem['source']['index']) {
+        this.dependsNode = this.dependsNode.concat([lkItem.target.index]);
+      } else if (objIndex == lkItem['target']['index']) {
+        this.dependsNode = this.dependsNode.concat([lkItem.source.index]);
+      }
+    });
 
-      // 隐藏节点
-      this.SVG.selectAll('circle').filter((d, i) => {
-         return (this.dependsNode.indexOf(d.index) == -1);
-      }).transition().style('opacity', 0.1);
-      // 隐藏线
-      this.SVG.selectAll('.edge').filter((d) => {
-        // return true;
-        return ((this.dependsLinkAndText.indexOf(d.source.index) == -1) && (this.dependsLinkAndText.indexOf(d.target.index) == -1))
-      }).transition().style('opacity', 0.1);
+    // 隐藏节点
+    this.SVG.selectAll('circle').filter((d, i) => {
+       return (this.dependsNode.indexOf(d.index) == -1);
+    }).transition().style('opacity', 0.1);
+    // 隐藏线
+    this.SVG.selectAll('.edge').filter((d) => {
+      // return true;
+      return ((this.dependsLinkAndText.indexOf(d.source.index) == -1) && (this.dependsLinkAndText.indexOf(d.target.index) == -1))
+    }).transition().style('opacity', 0.1);
 
-    } else {
-      // 取消高亮
-      // 恢复隐藏的线
-      this.SVG.selectAll('circle').filter(() => {
-        return true;
-      }).transition().style('opacity', 1);
-      // 恢复隐藏的线
-      this.SVG.selectAll('.edge').filter((d) => {
-        // return true;
-        return ((this.dependsLinkAndText.indexOf(d.source.index) == -1) && (this.dependsLinkAndText.indexOf(d.target.index) == -1))
-      }).transition().style('opacity', 1);
-      this.dependsNode = [];
-      this.dependsLinkAndText = [];
-    }
   }
 }
 
