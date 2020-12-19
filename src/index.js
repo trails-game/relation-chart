@@ -129,14 +129,21 @@ export default class RelationChart {
       .attr("width", this.config.width)
       .attr("height", this.config.height)
     // .transition().duration(750).call(d3.zoom().transform, d3.zoomIdentity);
-      .call(d3.zoom().scaleExtent(this.config.scaleExtent).on("zoom", () => {
+    
+      .call(d3.zoom().scaleExtent(this.config.scaleExtent).on("zoom", ({transform}) => {
         if (this.config.isScale) {
-          this.relMap_g.attr("transform", d3.event.transform);
+          this.relMap_g.attr("transform", transform);
         }
       }))
       .on('click', () => console.log('画布 click'))
       .on("dblclick.zoom", null);
-
+    
+    /*
+    .call(d3.zoom()
+      .extent([[0, 0], [width, height]])
+      .scaleExtent([1, 8])
+      .on("zoom", zoomed));
+   */
     // 3.defs  <defs>标签的内容不会显示，只有调用的时候才显示
     this.defs = this.SVG.append('defs');
     // 3.1 添加箭头
@@ -283,24 +290,24 @@ export default class RelationChart {
       .attr("stroke", "#ccf1fc")
       .attr("stroke-width", this.config.strokeWidth)
       .attr("r", this.config.r)
-      .on('mouseover', function (d) {
+      .on('mouseover', function (event, d) {
         d3.select(this).attr('stroke-width', '8');
         d3.select(this).attr('stroke', '#a3e5f9');
         if (that.config.isHighLight) {
           that.highlightObject(d);
         }
       })
-      .on('mouseout', function (d) {
+      .on('mouseout', function (event, d) {
         d3.select(this).attr('stroke-width', that.config.strokeWidth);
         d3.select(this).attr('stroke', '#c5dbf0');
         if (that.config.isHighLight) {
           that.highlightObject(null);
         }
       })
-      .on('click', function (d) {
+      .on('click', function (event, d) {
         console.log('头像节点click')
         // 展示方式2 ：浮窗展示
-        event = d3.event || window.event;
+        event = event || window.event;
         var pageX = event.pageX ? event.pageX : (event.clientX + (document.body.scrollLeft || document.documentElement.scrollLeft));
         var pageY = event.pageY ? event.pageY : (event.clientY + (document.body.scrollTop || document.documentElement.scrollTop));
         // console.log('pagex', pageX);
@@ -318,28 +325,27 @@ export default class RelationChart {
       })
     // 应用 自定义的 拖拽事件
       .call(d3.drag()
-        .on('start', (d) => {
-          d3.event.sourceEvent.stopPropagation();
+        .on('start', (event, d) => {
           // restart()方法重新启动模拟器的内部计时器并返回模拟器。
           // 与simulation.alphaTarget或simulation.alpha一起使用时，此方法可用于在交互
           // 过程中进行“重新加热”模拟，例如在拖动节点时，在simulation.stop暂停之后恢复模拟。
           // 当前alpha值为0，需设置alphaTarget让节点动起来
-          if (!d3.event.active) this.simulation.alphaTarget(0.3).restart();
+          if (!event.active) this.simulation.alphaTarget(0.3).restart();
           d.fx = d.x;
           d.fy = d.y;
         })
-        .on('drag', (d) => {
+        .on('drag', (event, d) => {
 
           // d.fx属性- 节点的固定x位置
           // 在每次tick结束时，d.x被重置为d.fx ，并将节点 d.vx设置为零
           // 要取消节点，请将节点 .fx和节点 .fy设置为空，或删除这些属性。
-          d.fx = d3.event.x;
-          d.fy = d3.event.y;
+          d.fx = event.x;
+          d.fy = event.y;
         })
-        .on('end', (d) => {
+        .on('end', (event, d) => {
 
           // 让alpha目标值值恢复为默认值0,停止力模型
-          if (!d3.event.active) this.simulation.alphaTarget(0);
+          if (!event.active) this.simulation.alphaTarget(0);
           d.fx = null;
           d.fy = null;
         }));
@@ -415,8 +421,8 @@ export default class RelationChart {
       });
 
       // 隐藏节点
-      this.SVG.selectAll('circle').filter((d) => {
-        return (this.dependsNode.indexOf(d.index) == -1);
+      this.SVG.selectAll('circle').filter((d, i) => {
+         return (this.dependsNode.indexOf(d.index) == -1);
       }).transition().style('opacity', 0.1);
       // 隐藏线
       this.SVG.selectAll('.edge').filter((d) => {
